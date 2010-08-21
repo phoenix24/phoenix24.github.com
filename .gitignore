@@ -2,6 +2,7 @@
 
 *.pyc
 *~
+*.~
 .classpath
 .project
 .pydevproject
