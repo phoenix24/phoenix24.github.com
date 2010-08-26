@@ -1,13 +1,25 @@
 <html>
     <head>
         <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js"></script>
-        <script type="text/javascript" src="./processing.js"></script>
+        <script type="text/javascript" src="./processing-0.9.7.min.js"></script>
         <script type="text/javascript" src="./init.js"></script>
         <script type="application/processing">
             float radius = 50.0;
+            float maxradi = 30;
             int x, y, nx, ny;
             int delay = 16;
+            var starting = "peace";
             var wds = [];
+            boolean dragging = false;
+
+            function blob(){
+                this.x = 0;
+                this.y = 0;
+                this.radi = 0;
+                this.angle = 0;
+                this.word = "";
+                this.wt = 15;
+            }
 
             void setup(){
                 size(900, 650);
@@ -20,7 +32,9 @@
                 
                 PFont fontA = loadFont("Arial");
                 textFont(fontA, 32);
-                textAlign(CENTER);
+
+                //removing center alignment so that we can add handlers.
+                //textAlign(CENTER);
             }
 
             void draw(){
@@ -30,33 +44,79 @@
 
                 background(100);
                 fill(0, 121,184);
+
                 stroke(255);
                 ellipse(x,y,radius,radius);
-                fill(0);
-                if (wds.length > 0){
-                    int angle = TWO_PI / wds.length;
-                    int wrdangle = 0;
-                    for (w=0;w<wds.length;w++){
-                        int dist = wds[w].length * 20.0;
-                        int xx = dist * cos(wrdangle);
-                        int yy = dist * sin(wrdangle);
-                        //console.log(wds.length + ", " + angle + ", " + xx + ", "  + yy );
-                        wrdangle = wrdangle + angle;
-                        smooth();
-                        strokeWeight(1);
-                        stroke(0);
-                        line(x, y, x+xx, y+yy);
-                        fill(255);
-                        text(wds[w], x+xx, y+yy);
 
-                        strokeWeight(5);
-                        point(x+xx,y+yy);
+                drawWords();
+
+                fill(255);
+                text(starting, x, y);
+            }
+
+            function drawWords(){
+
+                for (w=0;w<wds.length;w++){
+                    var wrd = wds[w];
+
+                    smooth();
+                    stroke(0);
+                    fill(255);
+                    strokeWeight(15);
+
+                    xx = wrd.x;
+                    yy = wrd.y;
+
+                    if ( dist(wrd.x,wrd.y, mouseX,mouseY) < maxradi ) {
+                        rndx = random(-.5, 5);
+                        rndy = random(-.5, 5);
+
+                        fill(0, 102, 153);
+                        stroke(64,187,128,100);
+                        strokeWeight(20);
+                        
+                        xx = wrd.x + rndx;
+                        yy = wrd.y + rndy;
+
+                        if (dragging){
+                            wrd.x = xx = mouseX;
+                            wrd.y = yy = mouseY;
+                        } 
                     }
+                    text(wrd.word, xx, yy);
+                    point(xx, yy);
+
+                    strokeWeight(2);
+                    line(x, y, xx, yy);
                 }
             }
 
+            void mouseDragged(){
+                dragging = true;
+            }
+
+            void mouseReleased(){
+                dragging = false;
+            }
+
             void mousePressed(){
-                var url = "http://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20thesaurus%20where%20key%3D%22PMrEy9mZefntqwh6iTDz%22%20and%20word%3D%22peace%22%20and%20language%3D%22en_US%22&format=json&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys";
+                for (w=0;w<wds.length;w++){
+                    var wrd = wds[w];
+                    if ( dist(wrd.x,wrd.y, mouseX,mouseY) < maxradi ) {
+                       if ( mousePressed && mouseButton == RIGHT ) {
+                            starting = wrd.word;
+                            console.log("word changed : " + starting);
+                        } else if ( mousePressed && mouseButton == LEFT) {
+                            return;
+                        }
+                    }
+                }
+
+                wds = [];
+                var url = "http://query.yahooapis.com/v1/public/yql" 
+                + "?q=select%20*%20from%20thesaurus%20where%20key%3D%22PMrEy9mZefntqwh6iTDz%22%20and%20word%3D%22" 
+                + starting
+                + "%22%20and%20language%3D%22en_US%22&format=json&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys";
 
                 $.getJSON(url, function(data){ 
                     var lst = data.query.results.response.list;
@@ -64,18 +124,29 @@
                         for (i=0; i<lst.length; i++){
                             words = lst[i].synonyms.split("|");
                             for (w=0; w<words.length; w++) {
-                                wds.push(words[w]);
-                                //console.log(wds);
+                                var wwd = new blob();
+                                wwd.word = words[w];
+                                wds.push(wwd);
+                                //console.log("my word : " + wwd.word);
                             } 
+                        }
+                    }
+                    if (wds.length > 0){
+                        int angle = TWO_PI / wds.length;
+                        int wrdangle = 0;
+                        for (w=0;w<wds.length;w++){
+                            wrdangle = wrdangle + angle;
+                            wds[w].angle = wrdangle;
+
+                            radi = wds[w].word.length * 20.0;
+                            wds[w].radi = radi;
+                            wds[w].x = x + radi * cos(wrdangle);
+                            wds[w].y = y + radi * sin(wrdangle);
+                            console.log("my word : " + wds[w].word + " : " + wds[w].y + " : " + wds[w].x + " : " + wds[w].angle);
                         }
                     }
                 });
             }
-
-//            void mouseMoved(){
-  //              nx = mouseX;
-    //            ny = mouseY;
-      //      }
         </script>
     </head>
     <body>
