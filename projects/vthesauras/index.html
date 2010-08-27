@@ -1,40 +1,65 @@
 <html>
     <head>
+        <link href='http://fonts.googleapis.com/css?family=Yanone+Kaffeesatz' rel='stylesheet' type='text/css'>
         <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js"></script>
         <script type="text/javascript" src="./processing-0.9.7.min.js"></script>
         <script type="text/javascript" src="./init.js"></script>
         <script type="application/processing">
             float radius = 50.0;
             float maxradi = 30;
+            float blobradi = 2;
             int x, y, nx, ny;
             int delay = 16;
             var starting = "peace";
-            var wds = [];
+            var selection = "(synonym)";
+            var wds = [], help = [], hlparr = ["restart", "synonym", "antonym"];
             boolean dragging = false;
 
             function blob(){
                 this.x = 0;
                 this.y = 0;
                 this.radi = 0;
+                this.maxradi = 0;
                 this.angle = 0;
                 this.word = "";
                 this.wt = 15;
+                this.animating = true;
+                this.color = 0;
+            }
+
+            function init(){
+                var hx = 80;
+                hlparr.forEach(function(wrd){
+                    hlp = new blob();
+                    hlp.word = wrd;
+                    hlp.x = hlp.x + hx;
+                    hlp.y = hlp.y + 30;
+                    help.push(hlp);
+                    hx = hx + hlp.word.length * 15;
+                });
+            }
+
+            function initStyle(){
+                fill(0);
+                strokeWeight(10);
+                textAlign(CENTER);
             }
 
             void setup(){
                 size(900, 650);
+                smooth();
                 strokeWeight(10);
-                frameRate(15);
+                frameRate(30);
                 x = width / 2;
                 y = height / 2;
                 nx = x;
                 ny = y;
                 
-                PFont fontA = loadFont("Arial");
+                PFont fontA = loadFont("Yanone Kaffeesatz");
                 textFont(fontA, 32);
 
-                //removing center alignment so that we can add handlers.
-                //textAlign(CENTER);
+                init();
+                initStyle();
             }
 
             void draw(){
@@ -42,53 +67,58 @@
                 x += (nx-x)/delay;
                 y += (ny-y)/delay;
 
-                background(100);
-                fill(0, 121,184);
+                background(255);
+                fill(0);
 
-                stroke(255);
-                ellipse(x,y,radius,radius);
+                //stroke(255);
+                //ellipse(x,y,radius,radius);
 
                 drawWords();
+                drawTargetWord();
+                drawHelp();
+            }
 
-                fill(255);
+            function drawTargetWord(){
+                initStyle();
                 text(starting, x, y);
+                point(x, y);
+            }
+
+            function drawHelp(){
+                initStyle();
+
+                help.forEach(function(hp){
+                    if (selection == "(" + hp.word + ")"){ hp.color = #FFCC00; }
+                    fill(hp.color);
+                    text(hp.word, hp.x, hp.y);
+                    point(hp.x, hp.y);
+                });
             }
 
             function drawWords(){
-
-                for (w=0;w<wds.length;w++){
-                    var wrd = wds[w];
-
-                    smooth();
+                //textAlign(CENTER);
+                wds.forEach(function(wrd){
                     stroke(0);
-                    fill(255);
-                    strokeWeight(15);
+                    fill(0);
 
-                    xx = wrd.x;
-                    yy = wrd.y;
-
+                    wrd = updateXY(wrd);
                     if ( dist(wrd.x,wrd.y, mouseX,mouseY) < maxradi ) {
-                        rndx = random(-.5, 5);
-                        rndy = random(-.5, 5);
-
-                        fill(0, 102, 153);
+                        fill(#FFCC00);
                         stroke(64,187,128,100);
-                        strokeWeight(20);
-                        
-                        xx = wrd.x + rndx;
-                        yy = wrd.y + rndy;
 
+                        blobradi = random(-.5, 5);
                         if (dragging){
-                            wrd.x = xx = mouseX;
-                            wrd.y = yy = mouseY;
-                        } 
+                            wrd.x =  mouseX;
+                            wrd.y = mouseY;
+                        }
                     }
-                    text(wrd.word, xx, yy);
-                    point(xx, yy);
+                    strokeWeight(5 + blobradi);
+                    text(wrd.word, wrd.x, wrd.y);
+                    point(wrd.x, wrd.y);
 
                     strokeWeight(2);
-                    line(x, y, xx, yy);
-                }
+                    line(x, y, wrd.x, wrd.y);
+                });
             }
 
             void mouseDragged(){
@@ -99,15 +129,49 @@
                 dragging = false;
             }
 
+            function cleanWord(word){
+                word = word.split(" ");
+                if (selection == "(antonym)" && selection == word[1]){
+                    return word[0];
+                }
+                if (selection == "(synonym)" && !word[1]){
+                    return word[0];
+                }
+                return "";
+            }
+
+            function updateXY(wrd){
+                if (wrd.radi < wrd.maxradi){
+                    wrd.animating = true;
+                    wrd.radi = wrd.radi + 5;
+                    wrd.x = x + wrd.radi * cos(wrd.angle);
+                    wrd.y = y + wrd.radi * sin(wrd.angle);
+                    return wrd;
+                }
+                wrd.animating = false;
+                return wrd;
+            }
+
             void mousePressed(){
                 for (w=0;w<wds.length;w++){
                     var wrd = wds[w];
-                    if ( dist(wrd.x,wrd.y, mouseX,mouseY) < maxradi ) {
-                       if ( mousePressed && mouseButton == RIGHT ) {
+                    if ( dist(wrd.x,wrd.y, mouseX,mouseY) < maxradi ){
+                       if ( mousePressed && mouseButton == RIGHT ){
                             starting = wrd.word;
                             console.log("word changed : " + starting);
-                        } else if ( mousePressed && mouseButton == LEFT) {
+                        } else if ( mousePressed && mouseButton == LEFT){
                             return;
+                        }
+                    }
+                }
+                for (w=0;w<help.length;w++){
+                    var wrd = help[w];
+                    wrd.color = #000000;
+                    if (dist(wrd.x,wrd.y, mouseX,mouseY) < maxradi){
+                        if (mousePressed && mouseButton == LEFT){
+                            if (wrd.word == 'restart'){ starting = "peace"; }
+                            if (wrd.word == 'synonym'){ selection = "(synonym)"; wrd.color = #FFCC00; }
+                            if (wrd.word == 'antonym'){ selection = "(antonym)"; wrd.color = #FFCC00; }
                         }
                     }
                 }
@@ -120,36 +184,29 @@
 
                 $.getJSON(url, function(data){ 
                     var lst = data.query.results.response.list;
-                    for (i=0;i<lst.length;i++){
-                        for (i=0; i<lst.length; i++){
-                            words = lst[i].synonyms.split("|");
-                            for (w=0; w<words.length; w++) {
+                    for (i=0; i<lst.length; i++){
+                        words = lst[i].synonyms.split("|");
+                        for (w=0; w<words.length; w++){
+                            var word = cleanWord(words[w]);
+                            if (word){
                                 var wwd = new blob();
-                                wwd.word = words[w];
+                                wwd.word = word;
+                                wwd.maxradi = word.length * 20.0;
                                 wds.push(wwd);
-                                //console.log("my word : " + wwd.word);
-                            } 
-                        }
+                            }
+                        } 
                     }
-                    if (wds.length > 0){
-                        int angle = TWO_PI / wds.length;
-                        int wrdangle = 0;
-                        for (w=0;w<wds.length;w++){
-                            wrdangle = wrdangle + angle;
-                            wds[w].angle = wrdangle;
-
-                            radi = wds[w].word.length * 20.0;
-                            wds[w].radi = radi;
-                            wds[w].x = x + radi * cos(wrdangle);
-                            wds[w].y = y + radi * sin(wrdangle);
-                            console.log("my word : " + wds[w].word + " : " + wds[w].y + " : " + wds[w].x + " : " + wds[w].angle);
-                        }
-                    }
+                    int angle = TWO_PI / wds.length;
+                    int wrdangle = angle;
+                    wds.forEach(function(wrd){
+                        wrd.angle = wrdangle;
+                        wrdangle = wrdangle + angle;
+                    });
                 });
             }
         </script>
     </head>
     <body>
-        <canvas width="800px" height="600px"></canvas>
+        <canvas class="canvas" width="800px" height="600px"></canvas>
     </body>
 </html>
