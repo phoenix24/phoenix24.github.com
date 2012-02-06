@@ -1,28 +1,34 @@
 <html>
-    <head>
-        <link href="/static/my.css" rel="stylesheet" type="text/css">
-g        <script type="text/javascript" src="/static/my.js"></script>
-        <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js"></script>
-        <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.4/jquery-ui.min.js"></script>
-    </head>
-    <body>
-        <div> 
-	  <p>some projects i've managed to collect back.<p> 
-	  <div>
-	    <ul>
-	      <li></li>
-	    </ul>
-	  </div>
-
+  <head>
+    <link href="/static/css/my.css" rel="stylesheet" type="text/css">
+    <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js"></script>
+    <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.4/jquery-ui.min.js"></script>
+    <script type="text/javascript" src="http://twitter.github.com/hogan.js/builds/1.0.3/hogan.js"></script>
+    <script type="text/javascript" src="/static/js/underscore-min.js"></script>
+    <script type="text/javascript" src="/static/js/my.js"></script>
+    
+    <script type="text/template" id="project-template">
+      <li>
+        <div class="project">
+          <h3 class="name">{{name}}</h3>
+          <p class="desc">{{description}}</p>
+          <p class="url">{{url}}</p>
+        </div>
+      </li>
+    </script>
+    
+  </head>
+  <body>
+    <div> 
 	  <p>some hacks i've managed to collect back.<p> 
-	  <div>
-	    <ul>
-	      <li><a href="/projects/snakeo">snakeo</a></li>
-	      <li><a href="/projects/tankers">tankers</a></li>
-	      <li><a href="/projects/vthesauras">vthesauras</a></li>
-	    </ul>
-	  </div>
-
+	    <div>
+	      <ul class="projects">
+	        <li><a href="/projects/snakeo">snakeo</a></li>
+	        <li><a href="/projects/tankers">tankers</a></li>
+	        <li><a href="/projects/vthesauras">vthesauras</a></li>
+	      </ul>
+	    </div>
 	</div>
-    </body>
+  </body>
 </html>
+
